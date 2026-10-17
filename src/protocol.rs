@@ -1,3 +1,5 @@
+use std::{fmt::format, str::RSplitTerminator};
+
 use thiserror::Error;
 
 pub enum Command {
@@ -65,6 +67,22 @@ impl Command {
     }
 }
 
+pub enum Answer {
+    Ok,
+    Found { value: String },
+    NotFound,
+}
+
+impl Answer {
+    pub fn format(&self) -> String {
+        match self {
+            Self::Ok => String::from("change saved"),
+            Self::Found { value } => value.clone(),
+            Self::NotFound => String::from("given key does not exist"),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -114,5 +132,29 @@ mod tests {
             Command::parse(String::from("not a command at all")),
             Err(CommandError::InvalidCommandName(_))
         ));
+    }
+
+    #[test]
+    fn ok_answer() {
+        assert_eq!(Answer::Ok.format(), String::from("change saved"));
+    }
+
+    #[test]
+    fn found_answer() {
+        assert_eq!(
+            Answer::Found {
+                value: String::from("test_value")
+            }
+            .format(),
+            String::from("test_value")
+        );
+    }
+
+    #[test]
+    fn not_found_answer() {
+        assert_eq!(
+            Answer::NotFound.format(),
+            String::from("given key does not exist")
+        );
     }
 }
