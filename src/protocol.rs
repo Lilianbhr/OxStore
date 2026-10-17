@@ -1,5 +1,3 @@
-use std::{fmt::format, str::RSplitTerminator};
-
 use thiserror::Error;
 
 pub enum Command {
