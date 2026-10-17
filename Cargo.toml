@@ -1,0 +1,7 @@
+[package]
+name = "OxStore"
+version = "0.1.1"
+edition = "2024"
+
+[dependencies]
+thiserror = "2.0.21"
