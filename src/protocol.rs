@@ -1,5 +1,6 @@
 use thiserror::Error;
 
+#[derive(Debug)]
 pub enum Command {
     Set { key: String, value: String },
     Get { key: String },
@@ -63,8 +64,17 @@ impl Command {
             ))),
         }
     }
+
+    pub fn format(&self) -> String {
+        match self {
+            Self::Set { key, value } => format!("set {} {}", key, value),
+            Self::Get { key } => format!("get {}", key),
+            Self::Del { key } => format!("del {}", key),
+        }
+    }
 }
 
+#[derive(Debug)]
 pub enum Answer {
     Ok,
     Found { value: String },
@@ -130,6 +140,31 @@ mod tests {
             Command::parse(String::from("not a command at all")),
             Err(CommandError::InvalidCommandName(_))
         ));
+    }
+
+    #[test]
+    pub fn format_command_set() {
+        let command = Command::Set {
+            key: "key".to_string(),
+            value: "value".to_string(),
+        };
+        assert_eq!("set key value".to_string(), command.format());
+    }
+
+    #[test]
+    pub fn format_command_get() {
+        let command = Command::Get {
+            key: "key".to_string(),
+        };
+        assert_eq!("get key".to_string(), command.format());
+    }
+
+    #[test]
+    pub fn format_command_del() {
+        let command = Command::Del {
+            key: "key".to_string(),
+        };
+        assert_eq!("del key".to_string(), command.format());
     }
 
     #[test]
