@@ -39,7 +39,7 @@ impl LogManager {
         Ok(())
     }
 
-    pub fn log_error(&mut self, raw_command: &String, error: &CommandError) -> Result<()> {
+    pub fn log_error(&mut self, raw_command: &str, error: &CommandError) -> Result<()> {
         let date = Local::now().to_rfc3339_opts(chrono::SecondsFormat::Millis, true);
         let level = "[ERROR]";
         let log_line = format!("{} {} <{}> -> {}", date, level, raw_command, error);
