@@ -1,11 +1,11 @@
 use crate::protocol::{Answer, Command};
+use anyhow::Result;
 use chrono::Local;
-use core::panic;
 use std::{
     collections::HashMap,
     fs::File,
     io::{
-        BufRead, BufReader, Result, Seek,
+        BufRead, BufReader, Seek,
         SeekFrom::{End, Start},
         Write,
     },
@@ -70,18 +70,9 @@ impl WalManager {
         self.wal_file.seek(Start(0))?;
         let buf_reader = BufReader::new(&self.wal_file);
 
-        println!("before");
-
         for result_line in buf_reader.lines() {
-            println!("inside");
-
             let line = result_line?;
-            println!("{}", line);
-
-            let associated_command = match Command::parse(line) {
-                Ok(val) => val,
-                Err(val) => panic!("{}", val),
-            };
+            let associated_command = Command::parse(line)?;
 
             match associated_command {
                 Command::Set { key, value } => {
@@ -93,8 +84,6 @@ impl WalManager {
                 _ => {}
             }
         }
-
-        println!("after");
 
         Ok(res)
     }
