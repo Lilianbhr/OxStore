@@ -4,7 +4,11 @@ use core::panic;
 use std::{
     collections::HashMap,
     fs::File,
-    io::{BufRead, BufReader, Result, Seek, SeekFrom::Start, Write},
+    io::{
+        BufRead, BufReader, Result, Seek,
+        SeekFrom::{End, Start},
+        Write,
+    },
 };
 
 pub struct LogManager {
@@ -44,13 +48,14 @@ impl WalManager {
     pub fn new(path: String) -> Result<Self> {
         let file = File::options()
             .read(true)
-            .append(true)
+            .write(true)
             .create(true)
             .open(path)?;
         Ok(WalManager { wal_file: file })
     }
 
     pub fn wal(&mut self, command: &Command) -> Result<()> {
+        self.wal_file.seek(End(0))?;
         match command {
             Command::Set { .. } | Command::Del { .. } => {
                 writeln!(self.wal_file, "{}", command.format())?;

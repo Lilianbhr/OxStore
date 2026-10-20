@@ -31,8 +31,8 @@ fn main() -> Result<()> {
 
     let mut wal_manager = storage::WalManager::new("data.wal".to_string())?;
     wal_manager.wal(&protocol::Command::Set {
-        key: "prenom".to_string(),
-        value: "Lilian".to_string(),
+        key: "nom".to_string(),
+        value: "Bouhier".to_string(),
     })?;
 
     let mem = wal_manager.build_live_memory()?;
