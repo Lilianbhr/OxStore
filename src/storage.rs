@@ -1,4 +1,4 @@
-use crate::protocol::{Answer, Command};
+use crate::protocol::{Answer, Command, CommandError};
 use anyhow::Result;
 use chrono::Local;
 use std::{
@@ -35,6 +35,14 @@ impl LogManager {
             answer,
             answer.format()
         );
+        writeln!(self.log_file, "{}", log_line)?;
+        Ok(())
+    }
+
+    pub fn log_error(&mut self, raw_command: &String, error: &CommandError) -> Result<()> {
+        let date = Local::now().to_rfc3339_opts(chrono::SecondsFormat::Millis, true);
+        let level = "[ERROR]";
+        let log_line = format!("{} {} <{}> -> {}", date, level, raw_command, error);
         writeln!(self.log_file, "{}", log_line)?;
         Ok(())
     }

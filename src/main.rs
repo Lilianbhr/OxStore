@@ -28,6 +28,12 @@ fn main() -> Result<()> {
         },
         &protocol::Answer::NotFound,
     )?;
+    logger.log_error(
+        &"not a command at all".to_string(),
+        &protocol::CommandError::InvalidCommandName(
+            "valid names are : set, get or del".to_string(),
+        ),
+    )?;
 
     let mut wal_manager = storage::WalManager::new("data.wal".to_string())?;
     wal_manager.wal(&protocol::Command::Set {
