@@ -1,8 +1,10 @@
 use crate::protocol::{Answer, Command};
 use chrono::Local;
+use core::panic;
 use std::{
+    collections::HashMap,
     fs::File,
-    io::{Result, Write},
+    io::{BufRead, BufReader, Result, Seek, SeekFrom::Start, Write},
 };
 
 pub struct LogManager {
@@ -40,7 +42,11 @@ pub struct WalManager {
 
 impl WalManager {
     pub fn new(path: String) -> Result<Self> {
-        let file = File::options().append(true).create(true).open(path)?;
+        let file = File::options()
+            .read(true)
+            .append(true)
+            .create(true)
+            .open(path)?;
         Ok(WalManager { wal_file: file })
     }
 
@@ -52,5 +58,39 @@ impl WalManager {
             _ => {}
         }
         Ok(())
+    }
+
+    pub fn build_live_memory(&mut self) -> Result<HashMap<String, String>> {
+        let mut res: HashMap<String, String> = HashMap::new();
+        self.wal_file.seek(Start(0))?;
+        let buf_reader = BufReader::new(&self.wal_file);
+
+        println!("before");
+
+        for result_line in buf_reader.lines() {
+            println!("inside");
+
+            let line = result_line?;
+            println!("{}", line);
+
+            let associated_command = match Command::parse(line) {
+                Ok(val) => val,
+                Err(val) => panic!("{}", val),
+            };
+
+            match associated_command {
+                Command::Set { key, value } => {
+                    res.insert(key, value);
+                }
+                Command::Del { key } => {
+                    res.remove(&key);
+                }
+                _ => {}
+            }
+        }
+
+        println!("after");
+
+        Ok(res)
     }
 }
