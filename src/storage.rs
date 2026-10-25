@@ -80,7 +80,7 @@ impl WalManager {
 
         for result_line in buf_reader.lines() {
             let line = result_line?;
-            let associated_command = Command::parse(line)?;
+            let associated_command = Command::parse(&line)?;
 
             match associated_command {
                 Command::Set { key, value } => {

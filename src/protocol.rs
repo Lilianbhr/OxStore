@@ -17,7 +17,7 @@ pub enum CommandError {
 }
 
 impl Command {
-    pub fn parse(raw_str: String) -> Result<Self, CommandError> {
+    pub fn parse(raw_str: &str) -> Result<Self, CommandError> {
         // separate parts of raw_string command
         let command_parts: Vec<&str> = raw_str.split(' ').collect();
 
@@ -97,39 +97,39 @@ mod tests {
 
     #[test]
     fn valid_set() {
-        assert!(Command::parse(String::from("set lilian cool")).is_ok());
+        assert!(Command::parse(&String::from("set lilian cool")).is_ok());
     }
 
     #[test]
     fn invalid_set() {
         assert!(matches!(
-            Command::parse(String::from("set invalid")),
+            Command::parse(&String::from("set invalid")),
             Err(CommandError::InvalidArguments(_))
         ));
     }
 
     #[test]
     fn valid_get() {
-        assert!(Command::parse(String::from("get lilian")).is_ok());
+        assert!(Command::parse(&String::from("get lilian")).is_ok());
     }
 
     #[test]
     fn invalid_get() {
         assert!(matches!(
-            Command::parse(String::from("get invalid args")),
+            Command::parse(&String::from("get invalid args")),
             Err(CommandError::InvalidArguments(_))
         ));
     }
 
     #[test]
     fn valid_del() {
-        assert!(Command::parse(String::from("del arg")).is_ok());
+        assert!(Command::parse(&String::from("del arg")).is_ok());
     }
 
     #[test]
     fn invalid_del() {
         assert!(matches!(
-            Command::parse(String::from("del too many args")),
+            Command::parse(&String::from("del too many args")),
             Err(CommandError::InvalidArguments(_))
         ));
     }
@@ -137,7 +137,7 @@ mod tests {
     #[test]
     fn invalid_command() {
         assert!(matches!(
-            Command::parse(String::from("not a command at all")),
+            Command::parse(&String::from("not a command at all")),
             Err(CommandError::InvalidCommandName(_))
         ));
     }
