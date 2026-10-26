@@ -1,5 +1,14 @@
 # OxStore
-OxStore is a thread-safe key-value database server written in Rust. Features TCP networking, a custom text protocol, Write-Ahead Log (WAL) persistence, and ergonomic error handling with `thiserror`.
+
+OxStore is a robust, systems-oriented persistent key-value database server written from scratch in Rust. Built primarily around the standard library (`std`) with minimal external dependencies (`thiserror`, `chrono`, `anyhow`), it offers full architectural control over data durability, concurrency, and network communication.
+
+## Core Features
+
+- **Interactive Bootstrapping:** Dynamically prompts for the target data directory at startup and automatically provisions the required file tree using standard path utilities.
+- **Custom Text Protocol:** Implements a lightweight, line-oriented command protocol supporting `set`, `get`, and `del` operations with rigorous parsing, syntax validation, and structured error handling.
+- **Crash Safety & Persistence:** Relies on a Write-Ahead Log (`WalManager`) to record state-mutating operations sequentially, enabling seamless in-memory state recovery (`HashMap`) upon server restart.
+- **Dual Observability Logging:** Features a dedicated `LogManager` to audit server execution, tracking successes, warnings, and malformed command errors with local millisecond-precision timestamps.
+- **Concurrent TCP Networking:** Binds to a local TCP listener and leverages modern scoped threads (`thread::scope`) alongside thread-safe shared state (`Arc<Mutex<T>>`) to handle multiple client sessions concurrently.
 
 
 ## Application Entry Point (`main.rs`)
