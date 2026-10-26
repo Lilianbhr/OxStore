@@ -1,6 +1,22 @@
 # OxStore
 OxStore is a thread-safe key-value database server written in Rust. Features TCP networking, a custom text protocol, Write-Ahead Log (WAL) persistence, and ergonomic error handling with `thiserror`.
 
+
+## Application Entry Point (`main.rs`)
+
+The entry point handles initialization, user interaction, and system bootstrapping before launching the database server.
+
+### 1. Interactive Directory Configuration
+* Prompts the user in the terminal to specify the target directory where the database files should reside.
+
+### 2. Automatic Directory Provisioning
+* Automatically builds the required folder structure, including any missing intermediate parent directories, using standard path utilities (`std::fs::create_dir_all`).
+
+### 3. Server Initialization
+* Resolves absolute file paths for both the execution log (`data.log`) and the Write-Ahead Log (`data.wal`).
+* Instantiates the core `Server` engine (triggering in-memory state recovery from the WAL) and boots up the active TCP listener.
+
+
 ## Protocol and Parsing Module (`protocol.rs`)
 This module defines the communication interface between clients and the server, handling both incoming requests and outgoing responses.
 
@@ -44,3 +60,16 @@ To restore the database state when the server boots up:
 * The `build_live_memory` method seeks back to the beginning of the WAL file.
 * It reads and parses the historical commands sequentially line by line.
 * It replays each operation into an in-memory `HashMap`, inserting or updating key-value pairs for `Set` commands and removing keys for `Del` commands, perfectly reconstructing the previous database state.
+
+
+## Network Server and Concurrency Module (`server.rs`)
+
+This module coordinates TCP networking, concurrent client handling, and request lifecycle management across the shared-state database engine.
+
+### 1. Multithreaded TCP Listener (`Server`)
+* Binds to a local TCP listener and leverages modern scoped threads (`thread::scope`) to handle multiple incoming client connections concurrently and safely.
+* Spawns a dedicated session handler per client using a buffered reader (`BufReader`) to parse and process commands line by line over persistent TCP streams.
+
+### 2. Request Orchestration and Execution (`execute_command`)
+* Centralizes command analysis and execution by routing commands through the thread-safe shared state (`Arc<Mutex<T>>`).
+* Enforces transactional ordering by ensuring state-mutating operations hit the Write-Ahead Log before modifying the in-memory `HashMap` and recording the execution audit log.
