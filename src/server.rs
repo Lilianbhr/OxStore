@@ -73,71 +73,63 @@ impl Server {
         Ok(())
     }
 
-    // TODO: clean unwraps
     fn command_analysis(
         &self,
         command: Result<Command, CommandError>,
         raw_command: &String,
-    ) -> Result<Answer, CommandError> {
+    ) -> Result<Answer> {
         match command {
             Err(e) => {
-                let log_manager_access = self.log_manager.clone();
-                let mut log_manager = log_manager_access.lock().unwrap();
-                log_manager.log_error(raw_command, &e).unwrap();
-                Err(e)
+                let mut log_manager = self.log_manager.lock().unwrap();
+                log_manager.log_error(raw_command, &e)?;
+                Err(e.into())
             }
-            Ok(val) => Ok(self.execute_command(val)),
+            Ok(val) => self.execute_command(val),
         }
     }
 
-    // TODO: clean Arc cloning + action order for del case + clean unwraps
-    fn execute_command(&self, command: Command) -> Answer {
+    fn execute_command(&self, command: Command) -> Result<Answer> {
         match &command {
             Command::Set { key, value } => {
                 // wal
-                let wal_manager_access = self.wal_manager.clone();
-                let mut wal_manager = wal_manager_access.lock().unwrap();
-                wal_manager.wal(&command).unwrap();
+                let mut wal_manager = self.wal_manager.lock().unwrap();
+                wal_manager.wal(&command)?;
 
                 // memory
-                let memory_access = self.memory.clone();
-                let mut memory = memory_access.lock().unwrap();
+                let mut memory = self.memory.lock().unwrap();
                 memory.insert(key.clone(), value.clone());
                 let answer = Answer::Ok;
 
                 // log
-                let log_manager_access = self.log_manager.clone();
-                let mut log_manager = log_manager_access.lock().unwrap();
-                log_manager.log(&command, &answer).unwrap();
+                let mut log_manager = self.log_manager.lock().unwrap();
+                log_manager.log(&command, &answer)?;
 
-                answer
+                Ok(answer)
             }
             Command::Del { key } => {
                 // wal
-                let wal_manager_access = self.wal_manager.clone();
-                let mut wal_manager = wal_manager_access.lock().unwrap();
-                wal_manager.wal(&command).unwrap();
+                let mut wal_manager = self.wal_manager.lock().unwrap();
 
                 // memory
-                let memory_access = self.memory.clone();
-                let mut memory = memory_access.lock().unwrap();
+                let mut memory = self.memory.lock().unwrap();
                 let res = memory.remove(key);
                 let answer = match res {
-                    Some(_) => Answer::Ok,
+                    Some(_) => {
+                        wal_manager.wal(&command)?;
+                        Answer::Ok
+                    }
                     None => Answer::NotFound,
                 };
 
                 // log
-                let log_manager_access = self.log_manager.clone();
-                let mut log_manager = log_manager_access.lock().unwrap();
-                log_manager.log(&command, &answer).unwrap();
+                let mut log_manager = self.log_manager.lock().unwrap();
+                log_manager.log(&command, &answer)?;
 
-                answer
+                Ok(answer)
             }
             Command::Get { key } => {
                 // memory
-                let memory_access = self.memory.clone();
-                let memory = memory_access.lock().unwrap();
+                let memory = self.memory.lock().unwrap();
                 let res = memory.get(key);
                 let answer = match res {
                     Some(val) => Answer::Found { value: val.clone() },
@@ -145,11 +137,10 @@ impl Server {
                 };
 
                 // log
-                let log_manager_access = self.log_manager.clone();
-                let mut log_manager = log_manager_access.lock().unwrap();
-                log_manager.log(&command, &answer).unwrap();
+                let mut log_manager = self.log_manager.lock().unwrap();
+                log_manager.log(&command, &answer)?;
 
-                answer
+                Ok(answer)
             }
         }
     }
